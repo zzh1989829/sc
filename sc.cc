@@ -79,9 +79,9 @@ void LogFileAndConsole(std::string log, std::string suffix = "") {
 std::string GetSimpConfigString() {
 	std::ostringstream oss;
 	oss.str();
-	oss << "=" << NumRunID << "=\nsize=" << MaxDataSize / 1024 << " cap="
+	oss << "=size=" << MaxDataSize / 1024 << " cap="
 			<< (double) CacheCapacity / 1024 << " intfct=" << InterestFactor
-			<< " rr=" << RequestRate << " st=" << ccstrategy;
+			<< " rr=" << RequestRate << " st=" << ccstrategy << " RUNID=" << NumRunID;
 	return oss.str();
 
 }
