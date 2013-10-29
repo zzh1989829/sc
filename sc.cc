@@ -26,7 +26,7 @@ uint32_t ccstrategy = ST_PHY;
 
 double SocialFwdFactor = 0.5; //
 double InterestFactor = 1; //probability of request data in personal interest set
-uint32_t layout = 1; // 1=grid 2=random
+uint32_t layout = 3; // 1=grid 2=random 3=random waypoint
 uint32_t TotalNodes = 99 + 1; //168
 int MaxDataSize = 3 * 1024;
 int TotalDataItems = 1000;
@@ -40,6 +40,7 @@ int RequestRate = 10;
 //int MinDataSize = 300;
 int trialRun = 0;
 bool WarmUp = 1;
+double speed = 0; //m per sec
 double transRange = 150; // 500 m  for grid layout
 double StartupDelay = 50; // for building routing table in secs
 double RunTime = 1000; //1000 Simulation Time in seconds
@@ -81,7 +82,8 @@ std::string GetSimpConfigString() {
 	oss.str();
 	oss << "=size=" << MaxDataSize / 1024 << " cap="
 			<< (double) CacheCapacity / 1024 << " intfct=" << InterestFactor
-			<< " rr=" << RequestRate << " st=" << ccstrategy << " RUNID=" << NumRunID;
+			<< " rr=" << RequestRate << " st=" << ccstrategy << " RUNID="
+			<< NumRunID;
 	return oss.str();
 
 }
@@ -98,8 +100,7 @@ std::string GetConfigString() {
 			<< RequestRate << "\nRunTime(sec):\t" << RunTime
 			<< "\nDataSourceX:\t" << str_extradelay << "\nData Items:\t"
 			<< TotalDataItems << "\nNumber Nodes:\t" << TotalNodes
-			<< "\nLayout:   \t" << (layout == 1 ? "grid" : "random")
-			<< "\nInterests:\t" << NumInterests
+			<< "\nLayout:   \t" << layout << "\nInterests:\t" << NumInterests
 			<< "\n=============================";
 	oss << "\n@Run time@  " << runSeconds / 60 << "m" << runSeconds % 60
 			<< "s\tRun ID:" << NumRunID << "\n";
@@ -139,6 +140,7 @@ int main(int argc, char *argv[]) {
 	cmd.AddValue("if", "interest factor", InterestFactor);
 	cmd.AddValue("test", "trial run", trialRun);
 	cmd.AddValue("cs", "cache scale", CacheScale);
+	cmd.AddValue("speed","speed", speed);
 	//cmd.AddValue("d", "data items", TotalDataItems);
 	//cmd.AddValue("i", "Interests", NumInterests);
 	//cmd.AddValue("n", "number of nodes", TotalNodes);
@@ -240,14 +242,39 @@ int main(int argc, char *argv[]) {
 	double maxX = 1500; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 3);
 	double maxY = 1500; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 2);
 	//NS_LOG_INFO("Area");
-
+	std::ostringstream speedConstantRandomVariableStream;
+	Ptr<PositionAllocator> taPositionAlloc;
 	switch (layout) {
+	case 3:
+		/*pos.SetTypeId("ns3::GridPositionAllocator");
+		 pos.Set("MinX", DoubleValue(0));
+		 pos.Set("MinY", DoubleValue(0));
+		 pos.Set("DeltaX", DoubleValue(120));
+		 pos.Set("DeltaY", DoubleValue(120));
+		 pos.Set("GridWidth", UintegerValue(10));*/
+		pos.SetTypeId("ns3::RandomRectanglePositionAllocator");
+		pos.Set("X",
+				StringValue("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
+		pos.Set("Y",
+				StringValue("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
+		taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
+		//oss << "ns3::ConstantRandomVariable[Constant=" << 20 << "]";
+		oss<<"ns3::UniformRandomVariable[Min=0|Max=20]";
+		mobility.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed",
+				StringValue(oss.str()), "Pause",
+				StringValue("ns3::ConstantRandomVariable[Constant=2.0]"),
+				"PositionAllocator", PointerValue(taPositionAlloc));
+		mobility.SetPositionAllocator(taPositionAlloc);
+		break;
+
 	case 1:
 		//grid
+
 		mobility.SetPositionAllocator("ns3::GridPositionAllocator", "MinX",
 				DoubleValue(0.0), "MinY", DoubleValue(0.0), "DeltaX",
 				DoubleValue(120), "DeltaY", DoubleValue(120), "GridWidth",
 				UintegerValue(10), "LayoutType", StringValue("RowFirst"));
+		mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 		break;
 	case 2:
 		//random distributed in a rectangle
@@ -263,13 +290,12 @@ int main(int argc, char *argv[]) {
 		NS_LOG_INFO("Area = [" << maxX <<" * "<<maxY << "]");
 		mobility.SetPositionAllocator(
 				pos.Create()->GetObject<PositionAllocator>());
-
+		mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 		break;
 	default:
 		break;
 	}
 
-	mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 	mobility.Install(nodes);
 
 	//set data source location
