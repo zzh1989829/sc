@@ -47,6 +47,7 @@ double RunTime = 1000; //1000 Simulation Time in seconds
 double SecondsTimeout = 0.040; //node request timeout 40ms
 //==================================================================
 time_t start_time, end_time;
+NodeContainer nodes;
 using namespace ns3;
 int GetRunID() {
 
@@ -63,9 +64,11 @@ int GetRunID() {
 	return runid - 1;
 }
 void PrintProcess() {
-	double TimePiece = RunTime / 100;
+	double TimePiece = RunTime / 1000;
 	NS_LOG_UNCOND("@@@@@@@@@@@@@@@@@@@@@@@@@@   "<<Simulator::Now().GetSeconds()<<"/"<<RunTime<<"s, "
 			<<100*Simulator::Now().GetSeconds()/RunTime<<"%");
+//	std::cout<<std::endl<<(nodes.Get(7)->GetObject<PositionAllocator>()->GetNext());
+//	std::cout<<std::endl<<(nodes.Get(7)->GetObject<MobilityModel>()->GetPosition());
 	Simulator::Schedule(Seconds(TimePiece), &PrintProcess);
 }
 void LogFileAndConsole(std::string log, std::string suffix = "") {
@@ -141,6 +144,7 @@ int main(int argc, char *argv[]) {
 	cmd.AddValue("test", "trial run", trialRun);
 	cmd.AddValue("cs", "cache scale", CacheScale);
 	cmd.AddValue("speed","speed", speed);
+	cmd.AddValue("layout","layout",layout);
 	//cmd.AddValue("d", "data items", TotalDataItems);
 	//cmd.AddValue("i", "Interests", NumInterests);
 	//cmd.AddValue("n", "number of nodes", TotalNodes);
@@ -184,7 +188,7 @@ int main(int argc, char *argv[]) {
 
 	// Convert to time object
 	std::ostringstream oss;
-	NodeContainer nodes;
+
 	nodes.Create(TotalNodes);
 
 	/*// disable fragmentation for frames below 2200 bytes
@@ -239,27 +243,21 @@ int main(int argc, char *argv[]) {
 
 	MobilityHelper mobility;
 	ObjectFactory pos;
-	double maxX = 1500; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 3);
-	double maxY = 1500; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 2);
+	double maxX = 1000; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 3);
+	double maxY = 1000; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 2);
 	//NS_LOG_INFO("Area");
 	std::ostringstream speedConstantRandomVariableStream;
 	Ptr<PositionAllocator> taPositionAlloc;
 	switch (layout) {
 	case 3:
-		/*pos.SetTypeId("ns3::GridPositionAllocator");
-		 pos.Set("MinX", DoubleValue(0));
-		 pos.Set("MinY", DoubleValue(0));
-		 pos.Set("DeltaX", DoubleValue(120));
-		 pos.Set("DeltaY", DoubleValue(120));
-		 pos.Set("GridWidth", UintegerValue(10));*/
+
 		pos.SetTypeId("ns3::RandomRectanglePositionAllocator");
 		pos.Set("X",
 				StringValue("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
 		pos.Set("Y",
 				StringValue("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
 		taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
-		//oss << "ns3::ConstantRandomVariable[Constant=" << 20 << "]";
-		oss<<"ns3::UniformRandomVariable[Min=0|Max=20]";
+		oss<<"ns3::UniformRandomVariable[Min=0|Max=2]";
 		mobility.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed",
 				StringValue(oss.str()), "Pause",
 				StringValue("ns3::ConstantRandomVariable[Constant=2.0]"),
