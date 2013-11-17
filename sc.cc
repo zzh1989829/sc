@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
 	Ipv4ListRoutingHelper list;
 	list.Add(staticRouting, 0);
 	// Enable OLSR
-	//list.Add(olsr, 10);
+	list.Add(olsr, 10);
 	//list.Add(aodv,10);
 
 	InternetStackHelper internet;
