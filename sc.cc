@@ -44,7 +44,7 @@ double speed = 0; //m per sec
 double transRange = 150; // 500 m  for grid layout
 double StartupDelay = 50; // for building routing table in secs
 double RunTime = 1000; //1000 Simulation Time in seconds
-double SecondsTimeout = 0.040; //node request timeout 40ms
+double SecondsTimeout = 0.080; //node request timeout 40ms
 //==================================================================
 time_t start_time, end_time;
 NodeContainer nodes;
@@ -143,8 +143,8 @@ int main(int argc, char *argv[]) {
 	cmd.AddValue("if", "interest factor", InterestFactor);
 	cmd.AddValue("test", "trial run", trialRun);
 	cmd.AddValue("cs", "cache scale", CacheScale);
-	cmd.AddValue("speed","speed", speed);
-	cmd.AddValue("layout","layout",layout);
+	cmd.AddValue("speed", "speed", speed);
+	cmd.AddValue("layout", "layout", layout);
 	//cmd.AddValue("d", "data items", TotalDataItems);
 	//cmd.AddValue("i", "Interests", NumInterests);
 	//cmd.AddValue("n", "number of nodes", TotalNodes);
@@ -153,7 +153,6 @@ int main(int argc, char *argv[]) {
 	 cmd.AddValue("verbose", "turn on all WifiNetDevice log components",
 	 verbose);
 	 cmd.AddValue("tracing", "turn on ascii and pcap trac", tracing);*/
-
 	cmd.Parse(argc, argv);
 
 	CacheCapacity = MaxDataSize * TotalDataItems * 0.05 / 4 / 5 * CacheScale; //bytes
@@ -245,7 +244,7 @@ int main(int argc, char *argv[]) {
 	ObjectFactory pos;
 	double maxX = 1000; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 3);
 	double maxY = 1000; //= floor(sqrt(numNodes * 6400 * 3 / 6) * 2);
-	//NS_LOG_INFO("Area");
+	NS_LOG_INFO("Area");
 	std::ostringstream speedConstantRandomVariableStream;
 	Ptr<PositionAllocator> taPositionAlloc;
 	switch (layout) {
@@ -257,7 +256,7 @@ int main(int argc, char *argv[]) {
 		pos.Set("Y",
 				StringValue("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
 		taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
-		oss<<"ns3::UniformRandomVariable[Min=0|Max=2]";
+		oss << "ns3::UniformRandomVariable[Min=0|Max=2]";
 		mobility.SetMobilityModel("ns3::RandomWaypointMobilityModel", "Speed",
 				StringValue(oss.str()), "Pause",
 				StringValue("ns3::ConstantRandomVariable[Constant=2.0]"),
@@ -292,9 +291,11 @@ int main(int argc, char *argv[]) {
 		break;
 	default:
 		break;
+	}NS_LOG_UNCOND(nodes.GetN());
+	for (uint32_t i = 0; i < nodes.GetN() - 1; i++) {
+		mobility.Install(nodes.Get(i));
 	}
-
-	mobility.Install(nodes);
+	//mobility.Install(nodes);
 
 	//set data source location
 	if (layout == 2) {
@@ -303,14 +304,26 @@ int main(int argc, char *argv[]) {
 		dsMobilityModel->SetPosition(Vector(100.0, 100.0, 0.0));
 		NS_LOG_UNCOND("Data Source Location: ("<<dsMobilityModel->GetPosition().x<<","<<dsMobilityModel->GetPosition().y<<")");
 	}
+	if (layout == 3) {
+		Ptr<MobilityModel> dsMobilityModel;
+
+		mobility.SetPositionAllocator("ns3::GridPositionAllocator", "MinX",
+				DoubleValue(0.0), "MinY", DoubleValue(0.0), "DeltaX",
+				DoubleValue(120), "DeltaY", DoubleValue(120), "GridWidth",
+				UintegerValue(10), "LayoutType", StringValue("RowFirst"));
+		mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+		mobility.Install(nodes.Get(TotalNodes - 1));
+		dsMobilityModel = nodes.Get(TotalNodes - 1)->GetObject<MobilityModel>();
+		dsMobilityModel->SetPosition(Vector(maxX / 2, maxY / 2, 0.0));
+		NS_LOG_UNCOND(dsMobilityModel->GetPosition().x<<","<<dsMobilityModel->GetPosition().y);
+	}
 	OlsrHelper olsr;
 	AodvHelper aodv;
 	Ipv4StaticRoutingHelper staticRouting;
-
 	Ipv4ListRoutingHelper list;
 	list.Add(staticRouting, 0);
 	// Enable OLSR
-	list.Add(olsr, 10);
+	//list.Add(olsr, 10);
 	//list.Add(aodv,10);
 
 	InternetStackHelper internet;
