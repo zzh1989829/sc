@@ -373,7 +373,7 @@ void SCApp::StartApplication() {
 	ss.str();
 	ss << "N#" << std::setw(3) << std::left << GetNodeID() + 1;
 	this->nodeIDstr = ss.str();
-	//RealStartUp();
+	RealStartUp();
 	//EvaluationStartUp();
 
 }
