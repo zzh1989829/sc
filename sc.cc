@@ -44,7 +44,7 @@ double speed = 0; //m per sec
 double transRange = 150; // 500 m  for grid layout
 double StartupDelay = 50; // for building routing table in secs
 double RunTime = 1000; //1000 Simulation Time in seconds
-double SecondsTimeout = 0.080; //node request timeout 40ms
+double SecondsTimeout = 0.050; //node request timeout 40ms
 //==================================================================
 time_t start_time, end_time;
 NodeContainer nodes;
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
 		mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 		mobility.Install(nodes.Get(TotalNodes - 1));
 		dsMobilityModel = nodes.Get(TotalNodes - 1)->GetObject<MobilityModel>();
-		dsMobilityModel->SetPosition(Vector(maxX / 2, maxY / 2, 0.0));
+		dsMobilityModel->SetPosition(Vector(100,100, 0.0));
 		NS_LOG_UNCOND(dsMobilityModel->GetPosition().x<<","<<dsMobilityModel->GetPosition().y);
 	}
 	OlsrHelper olsr;
